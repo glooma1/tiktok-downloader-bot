@@ -1,0 +1,8 @@
+services:
+  app:
+    build: .
+    container_name: python_ffmpeg_app
+    restart: unless-stopped
+    volumes:
+      - .:/usr/src/app
+    command: python -u ./index.py
