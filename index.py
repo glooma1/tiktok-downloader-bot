@@ -71,10 +71,11 @@ def handle_twitter(message):
     if len(caption) > 800:
         caption = caption[:800] + "..."
 
+    author = data.get('author', '')
     user = message.from_user
     display_name = f"@{user.username}" if user.username else user.first_name
 
-    caption = f"<b>{display_name}</b> -- <a href='{url}'>🔗</a>\n<blockquote expandable>📝 {caption}\n</blockquote>"
+    caption = f"<b>{display_name}</b> -- <a href='{url}'>🔗</a>\n<b>👤{author}</b><blockquote expandable>📝 {caption}\n</blockquote>"
     
     try:
         media_files = data.get('media', [])
