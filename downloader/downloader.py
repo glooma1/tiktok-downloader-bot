@@ -175,7 +175,7 @@ def download_instagram_post(url):
         os.makedirs(target_dir, exist_ok=True)
         filename = f"video_{uuid.uuid4().hex}"
         ydl_opts = {
-            'format': 'bestvideo+bestaudio/best',
+            'format': 'best[ext=mp4]/bestvideo[vcodec^=avc1]+bestaudio[acodec^=mp4a]/best[vcodec^=avc1]/bestvideo+bestaudio/best',
             'outtmpl': str(target_dir / f"{filename}.%(ext)s"),
             'quiet': True,
             'noplaylist': True,
@@ -306,7 +306,7 @@ def download_video_local(url: str):
     filename = f"download_{uuid.uuid4().hex}"
     
     ydl_opts = {
-        'format': 'bestvideo+bestaudio/best',  # Найкраща якість
+        'format': 'best[ext=mp4]/bestvideo[vcodec^=avc1]+bestaudio[acodec^=mp4a]/best[vcodec^=avc1]/bestvideo+bestaudio/best',  # Найкраща якість
         'outtmpl': f'{ARTIFACTS_DIR}/{filename}.%(ext)s',     # Шаблон імені файлу
         'quiet': True,                         # Менше сміття в логах
         'noplaylist': True,                    # Тільки одне відео, не плейлист
