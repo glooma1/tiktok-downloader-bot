@@ -1,16 +1,17 @@
-import os
 import telebot
 from telebot.types import InputMediaPhoto, InputMediaVideo
-from downloader import downloader
-# from downloader import speechtotext
-# from downloader import ai
-from quote import generate_telegram_message
-from downloader import x
-import configparser
-import time
-from downloader import stats
 from telebot import apihelper
+
+import os
+import time
 import logging
+import configparser
+
+from modules import downloader
+from modules import x
+from modules import stats
+from modules import ai
+from modules import speechtotext
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', filename='artifacts/bot.log', filemode='a')
 
@@ -373,26 +374,6 @@ def handle_grok(message):
     except Exception as e:
         logging.error(f"Error in handle_grok: {e}")
         bot.send_message(message.chat.id, f"Щось пішло не так: {e}")
-
-
-@bot.message_handler(commands=['quote'])
-def handle_quote_command(message):
-    if message.reply_to_message:
-        original_message = message.reply_to_message
-        original_text = original_message.text
-        original_user_id = original_message.from_user.id
-        original_username = original_message.from_user.first_name
-        download_avatar(bot, original_user_id, "profile_pic.jpg")
-        generate_telegram_message(original_username, original_text, "profile_pic.jpg", "quote.png")
-        with open("quote.png", 'rb') as sticker_file:
-            bot.send_sticker(
-                chat_id=message.chat.id, 
-                sticker=sticker_file,
-                reply_to_message_id=message.message_id
-            )
-        
-    else:
-        bot.reply_to(message, "Please use this command in reply to another message.")
 
 
 bot.infinity_polling()
