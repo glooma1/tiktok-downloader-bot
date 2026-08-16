@@ -1,16 +1,17 @@
-import os
 import telebot
 from telebot.types import InputMediaPhoto, InputMediaVideo
-from downloader import downloader
-from downloader import speechtotext
-from downloader import ai
-from quote import generate_telegram_message
-from downloader import x
-import configparser
-import time
-from downloader import stats
 from telebot import apihelper
+
+import os
+import time
 import logging
+import configparser
+
+from modules import downloader
+from modules import x
+from modules import stats
+from modules import ai
+from modules import speechtotext
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', filename='artifacts/bot.log', filemode='a')
 
@@ -66,42 +67,56 @@ def handle_twitter(message):
     if data.get("error"):
         bot.edit_message_text(f"Помилка: {data['error']}", chat_id=message.chat.id, message_id=status_msg.message_id)
         return
+    
     caption = data.get('caption', '')
     if len(caption) > 800:
         caption = caption[:800] + "..."
-    caption = f"👤 <b>{data['author']}</b>:\n\n{caption}"
-    bot.delete_message(message.chat.id, status_msg.message_id)
+
+    author = data.get('author', '')
+    user = message.from_user
+    display_name = f"@{user.username}" if user.username else user.first_name
+
+    caption = f"<b>{display_name}</b> -- <a href='{url}'>🔗</a>\n<b>👤{author}</b><blockquote expandable>📝 {caption}\n</blockquote>"
+    
     try:
-        media_files = data['media']
+        media_files = data.get('media', [])
         
         if len(media_files) == 0:
             # Тільки текст
-            bot.reply_to(message, caption, parse_mode="HTML")
+            bot.edit_message_text(caption, chat_id=message.chat.id, message_id=status_msg.message_id, parse_mode="HTML")
             
         elif len(media_files) == 1:
             # Одне фото або відео
             link = media_files[0]
             if ".mp4" in link:
-                bot.send_video(message.chat.id, link, caption=caption, parse_mode="HTML", reply_to_message_id=message.message_id, timeout=120, supports_streaming=True)
+                media = InputMediaVideo(link, caption=caption, parse_mode="HTML")
             else:
-                bot.send_photo(message.chat.id, link, caption=caption, parse_mode="HTML", reply_to_message_id=message.message_id, timeout=120)
-        
+                media = InputMediaPhoto(link, caption=caption, parse_mode="HTML")
+                
+            bot.edit_message_media(chat_id=message.chat.id, message_id=status_msg.message_id, media=media)
+            
         else:
-            # Група медіа (альбом)
+            # Якщо медіа кілька (альбом) — редагувати 1 повідомлення в альбом неможливо,
+            # тому видаляємо статус і відправляємо альбом.
             media_group = []
             for i, link in enumerate(media_files):
                 # Підпис додаємо тільки до першого елемента групи
                 cap = caption if i == 0 else ""
-                
+
                 if ".mp4" in link:
                     media_group.append(InputMediaVideo(link, caption=cap, parse_mode="HTML"))
                 else:
                     media_group.append(InputMediaPhoto(link, caption=cap, parse_mode="HTML"))
             
+            try:
+                bot.delete_message(message.chat.id, status_msg.message_id)
+            except Exception:
+                pass
+
             bot.send_media_group(message.chat.id, media_group, reply_to_message_id=message.message_id, timeout=120)
 
     except Exception as e:
-        bot.send_message(message.chat.id, f"Не вдалося відправити медіа: {e}")
+        bot.edit_message_text(f"Не вдалося відправити медіа: {e}", chat_id=message.chat.id, message_id=status_msg.message_id)
 
 
 @bot.message_handler(func=is_media_link)
@@ -360,26 +375,5 @@ def handle_grok(message):
         logging.error(f"Error in handle_grok: {e}")
         bot.send_message(message.chat.id, f"Щось пішло не так: {e}")
 
-
-@bot.message_handler(commands=['quote'])
-def handle_quote_command(message):
-    if message.reply_to_message:
-        original_message = message.reply_to_message
-        original_text = original_message.text
-        original_user_id = original_message.from_user.id
-        original_username = original_message.from_user.first_name
-        download_avatar(bot, original_user_id, "profile_pic.jpg")
-        generate_telegram_message(original_username, original_text, "profile_pic.jpg", "quote.png")
-        with open("quote.png", 'rb') as sticker_file:
-            bot.send_sticker(
-                chat_id=message.chat.id, 
-                sticker=sticker_file,
-                reply_to_message_id=message.message_id
-            )
-        
-    else:
-        bot.reply_to(message, "Please use this command in reply to another message.")
-
-bot.polling()
 
 bot.infinity_polling()

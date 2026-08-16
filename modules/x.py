@@ -9,7 +9,7 @@ def get_x_post_content(url: str):
     Отримує посилання на x.com або twitter.com
     Повертає словник:
     {
-        "text": "Текст поста",
+        "caption": "Текст поста",
         "media": ["url_video.mp4", "url_photo.jpg"],
         "author": "Нікнейм",
         "error": None
@@ -40,7 +40,7 @@ def get_x_post_content(url: str):
         data = response.json()
 
         # 3. Витягуємо дані
-        text = data.get("text", "")
+        caption = data.get("text", "")
         author = data.get("user_name", "Unknown")
         
         # Збираємо медіа (фото та відео)
@@ -58,7 +58,7 @@ def get_x_post_content(url: str):
 
         logging.info(f"Successfully fetched content: author={author}, media_count={len(media_urls)}")
         return {
-            "text": text,
+            "caption": caption,
             "media": media_urls,
             "author": author,
             "error": None
@@ -85,7 +85,7 @@ if __name__ == "__main__":
         print(f"Помилка: {result['error']}")
     else:
         print(f"👤 Автор: {result['author']}")
-        print(f"📄 Текст: {result['text']}")
+        print(f"📄 Текст: {result['caption']}")
         print(f"🎞 Медіа ({len(result['media'])}):")
         for m in result['media']:
             print(f" - {m}")
